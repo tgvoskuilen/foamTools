@@ -11,11 +11,15 @@
             IOobject::NO_WRITE
         )
     );
+    
+    word liquidPhaseName = VOFDict.lookup("liquidPhaseName");
+    word vaporPhaseName = VOFDict.lookup("vaporPhaseName");
+    
     volScalarField alphaLiquid
     (
         IOobject
         (
-            "alphaLiquid",
+            liquidPhaseName,
             runTime.timeName(),
             mesh,
             IOobject::MUST_READ,
@@ -24,18 +28,23 @@
         mesh
     );
     
-    volScalarField alphaVapor
-    (
-        IOobject
+    volScalarField* alphaVaporPtr = NULL;
+    
+    if( vaporPhaseName != "none" )
+    {
+        alphaVaporPtr = new volScalarField
         (
-            "alphaVapor",
-            runTime.timeName(),
-            mesh,
-            IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
-        ),
-        mesh
-    );
+            IOobject
+            (
+                vaporPhaseName,
+                runTime.timeName(),
+                mesh,
+                IOobject::MUST_READ,
+                IOobject::AUTO_WRITE
+            ),
+            mesh
+        );
+    }
     
     
     volVectorField U

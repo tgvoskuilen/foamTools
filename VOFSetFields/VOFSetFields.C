@@ -58,9 +58,13 @@ int main(int argc, char *argv[])
     
     alphaLiquid.correctBoundaryConditions();
     
-    // Set vapor fraction
-    alphaVapor = 1.0 - alphaLiquid;
-    alphaVapor.correctBoundaryConditions();
+    // Set vapor fraction if applicable
+    if( alphaVaporPtr != NULL )
+    {
+        volScalarField& alphaVapor = *alphaVaporPtr;
+        alphaVapor = 1.0 - alphaLiquid;
+        alphaVapor.correctBoundaryConditions();
+    }
     
     // Set surrounding species
     forAll(species, i)
@@ -78,7 +82,7 @@ int main(int argc, char *argv[])
         {
             if( species[j].name() == name )
             {
-                species[j] += alphaVapor * Yremaining * value;
+                species[j] += (1.0 - alphaLiquid) * Yremaining * value;
                 break;
             }
         }

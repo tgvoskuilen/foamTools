@@ -51,30 +51,27 @@ int main(int argc, char *argv[])
 
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 	
-    Info<< "Reading field alpha1\n" << endl;
-
-    /*
-        The mesh refinement uses 'refinementField' as the refinement criteria.
-        In my solvers, 'refinementField' is calculated from the multiphase
-        mixture.
-
-        In this pre-adaptation routine, 'refinementField' is calculated from
-        the interfaces of alphaair, as specified in setFields.
-
-        Use this routine iteratively, alternating with setFields to refine and
-        capture the initial conditions
-            initDynamicMesh
-            copy originals from 0.org to new time folder
-            setFields -latestTime
-
-
-    */
-
-    volScalarField alphaVapor
+    IOdictionary initDynamicMeshDict
     (
         IOobject
         (
-            "alphaVapor",
+            "initDynamicMeshDict",
+            mesh.time().system(),
+            mesh,
+            IOobject::MUST_READ_IF_MODIFIED,
+            IOobject::NO_WRITE
+        )
+    );
+    
+    word alphaName = initDynamicMeshDict.lookup("alphaName");
+    
+    Info<< "Reading field " << alphaName << endl;
+    
+    volScalarField alpha1
+    (
+        IOobject
+        (
+            alphaName,
             runTime.timeName(),
             mesh,
             IOobject::MUST_READ,
@@ -83,15 +80,6 @@ int main(int argc, char *argv[])
         mesh
     );
     
-    //relax alphaVapor a little bit
-    /*dimensionedScalar dx = pow(min(mesh.V()), 1.0/3.0);
-    dimensionedScalar dA = dx*dx/4.0; //dTau("dTau",dimArea,dx*dx/4.0);
-    
-    for(label i = 0; i < 1; i++)
-    {
-        alphaVapor += dA * fvc::laplacian(alphaVapor);
-    }*/
-
 
     volScalarField refinementField
     (
@@ -101,27 +89,21 @@ int main(int argc, char *argv[])
             runTime.timeName(),
             mesh,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
-        1e6*mag(fvc::grad(alphaVapor))
+        1e6*mag(fvc::grad(alpha1))
     );
-    //refinementField.internalField() *= pow(mesh.V(),1.0/3.0);
 
     runTime.setDeltaT(1e-6);
     runTime++;
     
-	Info<< "Time = " << runTime.timeName() << nl << endl;
-	
+    Info<< "Time = " << runTime.timeName() << nl << endl;
 
-	scalar timeBeforeMeshUpdate = runTime.elapsedCpuTime();
-	{
-		mesh.update();
+    scalar timeBeforeMeshUpdate = runTime.elapsedCpuTime();
+    {
+	    mesh.update();
+    }
 
-        refinementField = 1e6*mag(fvc::grad(alphaVapor));
-        mesh.update();
-	}
-	
-	
 
 	if (mesh.changing())
 	{
