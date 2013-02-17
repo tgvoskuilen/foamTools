@@ -29,7 +29,7 @@ droplets
         center   (0 0.001 0.005);
         radius   (0 0.0005 0.0005);
         delVapor 1e-4;
-        U        (0 0 0);
+        U        (0 0 -1);
         liquidSpecies
         (
         );
@@ -37,13 +37,13 @@ droplets
         (
         );
     }
-    /*
+    
     Drop2
     {
         center   (0 0.005 0.005);
         radius   (0 0.0005 0.0005);
         delVapor 1e-4;
-        U        (0 0 0);
+        U        (0 0 -1);
         liquidSpecies
         (
         );
@@ -64,7 +64,7 @@ droplets
         vaporSpecies
         (
         );
-    }*/
+    }
 );
 
 

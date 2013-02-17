@@ -2,11 +2,11 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2013 Tyler Voskuilen
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -21,13 +21,12 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
+
 Class
     Foam::dynamicRefineBalancedFvMesh
 
 Description
-    A fvMesh with built-in refinement.
-
-    Determines which cells to refine/unrefine and does all in update().
+    A fvMesh with built-in refinement and run-time load balancing.
 
 SourceFiles
     dynamicRefineBalancedFvMesh.C
