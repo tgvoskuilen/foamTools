@@ -2,20 +2,7 @@
 import os
 import re
 import string
-
-# Database of sutherland transport coefficients
-# http://www.osti.gov/bridge/servlets/purl/10181503-tLKFUg/10181503.pdf
-sutherlandData = [{'Specie':'N2',      'As':3.61e-7,   'Ts':-9.549},
-                  {'Specie':'O2',      'As':2.29e-6,   'Ts':164.4},
-                  {'Specie':'H2',      'As':1.96e-7,   'Ts':2.187},
-                  {'Specie':'H',       'As':3.95e-7,   'Ts':0},
-                  {'Specie':'O',       'As':1.15e-6,   'Ts':0},
-                  {'Specie':'OH',      'As':1.10e-6,   'Ts':0},
-                  {'Specie':'H2O',     'As':1.60e-6,   'Ts':0} ]
-
-#Alternately, use Lennard-Jones parameters
-
-
+import transportProperties as tp
 
 class transportProperty(object):
     """
@@ -258,12 +245,14 @@ def add_species_to_thermo_dict(species, default):
 
 def fix_thermo_transport_props():
     """
-    Fix the sutherland transport properties in "thermo" which openfoam always
-    puts to the same constant values
+    Fix the Sutherland transport properties in "thermo" which openfoam always
+    puts to the same constant values for some reason.
     """
     f_thermo = open('constant/thermo','r')
     thermo_lines = f_thermo.readlines()
     f_thermo.close()
+
+    sutherlandCoeffs = tp.read_Sutherland_coeffs()
 
     new_thermo = []
     currentSpecie = ''
@@ -272,22 +261,20 @@ def fix_thermo_transport_props():
     for line in thermo_lines:
         if line[0] != '{' and line[0] != '}' and line[0] != ' ':
             currentSpecie = line.strip()
-            matches = [x for x in sutherlandData if 
-                x['Specie'] == currentSpecie]
-
-            hasNewData = len(matches)==1
-
-            if hasNewData:
-                As = matches[0]['As']
-                Ts = matches[0]['Ts']
+            
+            if currentSpecie in sutherlandCoeffs:
+                As = sutherlandCoeffs[currentSpecie][0]
+                Ts = sutherlandCoeffs[currentSpecie][1]
                 print "Updating Sutherland coefficients for ", currentSpecie
-
+                hasNewData = True
+            else:
+                hasNewData = False
 
         if 'As' in line and hasNewData:
-            new_thermo.append('        As              %e;\n' % As)
+            new_thermo.append('        As              %7.6e;\n' % As)
 
         elif 'Ts' in line and hasNewData:
-            new_thermo.append('        Ts              %f;\n' % Ts)
+            new_thermo.append('        Ts              %7.3f;\n' % Ts)
             hasNewData = False
 
         else:

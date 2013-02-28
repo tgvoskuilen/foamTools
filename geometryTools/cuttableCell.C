@@ -393,6 +393,7 @@ bool Foam::cuttableCell::makePoints
     {
         Info<< "\n--> Bad point list:\n" << pointList << endl;
         Info<< "\n--> Area:" << mag(area) << endl;
+        Info<< "\n--> Area Vec:" << areaVec << endl;
         //FatalError << "makePoints encountered zero area" << abort(FatalError);
         return false;
     }
@@ -592,8 +593,7 @@ scalar Foam::cuttableCell::cut(const Foam::plane& cutPlane)
     
     scalar alpha = volume/baseVol_;
     
-    lostCentroid_ = centroid_ + 
-                    (alpha - 1.0)/(alpha + SMALL)*(cutCentroid_ - centroid_);
+    lostCentroid_ = (centroid_ - alpha*cutCentroid_)/(1.0 - alpha + SMALL);
     
     return alpha;
 }
