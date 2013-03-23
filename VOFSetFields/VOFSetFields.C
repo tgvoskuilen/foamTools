@@ -36,7 +36,7 @@ Description
 #include "fvMesh.H"
 #include "fvCFD.H"
 #include "dynamicFvMesh.H"
-#include "droplet.H"
+#include "shape.H"
 
 using namespace Foam;
 
@@ -51,9 +51,9 @@ int main(int argc, char *argv[])
     #include "createPhi.H" //needed to do boundary corrections.
     
     // Set drop species and liquid fraction
-    forAllIter(PtrDictionary<droplet>, droplets, dropI)
+    forAllIter(PtrDictionary<shape>, shapes, shapeI)
     {
-        dropI().set(alphaLiquid, U, species);
+        shapeI().set(alphaLiquid, U, species);
     }
     
     alphaLiquid.correctBoundaryConditions();

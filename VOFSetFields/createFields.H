@@ -77,10 +77,10 @@
     
     // Read entries from dictionary
     
-    PtrDictionary<droplet> droplets
+    PtrDictionary<shape> shapes
     (
-        VOFDict.lookup("droplets"),
-        droplet::iNew(mesh)
+        VOFDict.lookup("shapes"),
+        shape::iNew(mesh)
     );
     
     HashTable<scalar> defaultSpecieValues(VOFDict.lookup("defaultSpecies"));
@@ -88,9 +88,9 @@
     
     List<word> specieNames = defaultSpecieValues.toc();
     
-    forAllConstIter(PtrDictionary<droplet>, droplets, dropI)
+    forAllConstIter(PtrDictionary<shape>, shapes, shapeI)
     {
-        specieNames.append( dropI().species() );
+        specieNames.append( shapeI().species() );
     }
     
     

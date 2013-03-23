@@ -1,4 +1,8 @@
-droplet.C
+shapes/shape.C
+shapes/newShape.C
+shapes/ellipsoid.C
+shapes/cutPlane.C
+
 VOFSetFields.C
 
 EXE = $(FOAM_USER_APPBIN)/VOFSetFields

@@ -20,34 +20,50 @@ defaultSpecies
     N2   1.0
 );
 
-droplets
+shapes
 (
-    DropMMH
+    DropA
     {
-        center   (0 0.06 0);
-        radius   (0.01 0.01 1e15);
+        shape    ellipsoid;
+        
+        ellipsoidCoeffs
+        {
+            center   (0 0.06 0);
+            radius   (0.01 0.01 1e15);
+        }
+        
         delVapor 2e-5;
         U        (0 0 -1);
+        
         liquidSpecies
         (
             CH3NHNH2L  1.0
         );
+        
         vaporSpecies
         (
             CH3NHNH2   0.025
         );
     }
     
-    DropNTO
+    PlaneA
     {
-        center   (0 0.06 0);
-        radius   (0.01 0.01 1e15);
+        shape    plane;
+        
+        planeCoeffs
+        {
+            point   (0 0.06 0);
+            normal   (1 0 0);
+        }
+        
         delVapor 2e-5;
         U        (0 0 -1);
+        
         liquidSpecies
         (
             N2O4L  1.0
         );
+        
         vaporSpecies
         (
             N2O4   0.58;

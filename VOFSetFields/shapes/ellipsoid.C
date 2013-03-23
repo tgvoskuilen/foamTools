@@ -23,76 +23,38 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "droplet.H"
+#include "ellipsoid.H"
+#include "addToRunTimeSelectionTable.H"
+
+namespace Foam
+{
+namespace shapes
+{
+    defineTypeNameAndDebug(ellipsoid, 0);
+    addToRunTimeSelectionTable(shape, ellipsoid, components);
+}
+}
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::droplet::droplet
+Foam::shapes::ellipsoid::ellipsoid
 (
     const word& name,
-    const dictionary& dropletDict,
+    dictionary shapeDict,
     const fvMesh& mesh
 )
 :
-    mesh_(mesh),
-    name_(name),
-    dropletDict_(dropletDict),
-    center_(dropletDict.lookup("center")),
-    radius_(dropletDict.lookup("radius")),
-    dV_(readScalar(dropletDict.lookup("delVapor"))),
-    Uinit_(dropletDict.lookup("U")),
-    liquidSpecies_(dropletDict.lookup("liquidSpecies")),
-    vaporSpecies_(dropletDict.lookup("vaporSpecies")),
-    dropMask_
-    (
-        IOobject
-        (
-            "drop_mask_" + name_,
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        mesh,
-        dimensionedScalar("dropMask",dimless,0),
-        zeroGradientFvPatchScalarField::typeName
-    ),
-    vaporMask_
-    (
-        IOobject
-        (
-            "vapor_mask_" + name_,
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        mesh,
-        dimensionedScalar("vaporMask",dimless,0),
-        zeroGradientFvPatchScalarField::typeName
-    )
-{
-    Foam::Info<< "Created droplet " << name << Foam::endl;
-}
+    shape(typeName, name, shapeDict, mesh),
+    center_(coeffDict_.lookup("center")),
+    radius_(coeffDict_.lookup("radius"))
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::autoPtr<Foam::droplet> Foam::droplet::clone() const
-{
-    notImplemented("droplet::clone() const");
-    return autoPtr<droplet>(NULL);
-}
 
-Foam::List<Foam::word> Foam::droplet::species() const
-{
-    List<word> species = liquidSpecies_.toc();
-    species.append(vaporSpecies_.toc());
-    return species;
-}
-
-
-Foam::tmp<Foam::scalarField> Foam::droplet::r() const
+Foam::tmp<Foam::scalarField> Foam::shapes::ellipsoid::r() const
 {
     vector sr = radius_;
         
@@ -113,8 +75,9 @@ Foam::tmp<Foam::scalarField> Foam::droplet::r() const
     return r;
 }
 
-void Foam::droplet::calcDropMask()
+void Foam::shapes::ellipsoid::calculate()
 {
+    //calculate liquid mask
     vector sr = radius_;
     const volVectorField& cellCenters = mesh_.C();
     if (sr.x() < SMALL) { sr.x() = GREAT; }
@@ -123,7 +86,7 @@ void Foam::droplet::calcDropMask()
     
     tmp<scalarField> tr = r();
         
-    forAll(dropMask_, cellI)
+    forAll(liquidMask_, cellI)
     {
         vector cp = cellCenters[cellI] - center_;
 
@@ -142,54 +105,20 @@ void Foam::droplet::calcDropMask()
         
         cuttableCell pc(mesh_, cellI);
         
-        dropMask_[cellI] = pc.cut( plane(p, n) );
+        liquidMask_[cellI] = pc.cut( plane(p, n) );
     }
 
-    dropMask_.correctBoundaryConditions();
-}
-
-
-void Foam::droplet::calculate()
-{
-    //calculate drop mask
-    calcDropMask();  
+    liquidMask_.correctBoundaryConditions();
     
     //calculate vapor mask
     scalar d_layer = Foam::mag(radius_)/dV_;
 
     tmp<scalarField> f = Foam::max(1.0 - d_layer*(r() - 1.0), 0.0);
     
-    vaporMask_.internalField() = f * (1.0 - dropMask_);
+    vaporMask_.internalField() = f * (1.0 - liquidMask_);
     vaporMask_.correctBoundaryConditions();
 }
 
-
-
-void Foam::droplet::set
-(
-    Foam::volScalarField& alphaLiquid,
-    Foam::volVectorField& U,
-    PtrList<volScalarField>& species
-)
-{
-    calculate();
-    
-    alphaLiquid.internalField() += dropMask_;
-    U.internalField() += Uinit_*pos(dropMask_+vaporMask_ - SMALL);
-
-    forAll(species, i)
-    {
-        if( liquidSpecies_.found(species[i].name()) )
-        {
-            species[i].internalField() += dropMask_*liquidSpecies_[species[i].name()];
-        }
-        
-        if( vaporSpecies_.found(species[i].name()) )
-        {
-            species[i].internalField() += vaporMask_*vaporSpecies_[species[i].name()];
-        }
-    }
-}
 
 
 

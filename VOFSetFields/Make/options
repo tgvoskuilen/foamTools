@@ -1,5 +1,6 @@
 EXE_INC = \
     -I../geometryTools/lnInclude \
+    -Ishapes \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
     -I$(LIB_SRC)/dynamicMesh/lnInclude \
     -I$(LIB_SRC)/meshTools/lnInclude \

@@ -25,18 +25,15 @@ Class
     Foam::phase
 
 Description
-    Single compressible phase derived from the phase-fraction.
-    Used as part of the hsMultiphaseMixtureThermo for interface-capturing
-    simulations in conjunction with a reaction subclass. The phase contains
-    its constituitive elements (subspecies).
+    Abstract shape class
 
 SourceFiles
-    droplet.C
+    shape.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef droplet_H
-#define droplet_H
+#ifndef shape_H
+#define shape_H
 
 #include "volFields.H"
 #include "PtrDictionary.H"
@@ -55,44 +52,78 @@ namespace Foam
                          Class droplet Declaration
 \*---------------------------------------------------------------------------*/
 
-class droplet
+class shape
 {
-    // Private data
-    
+    // Protected data
+protected:
+
         const fvMesh& mesh_;
 
-        //- Droplet name
+        //- Shape name
         word name_;
         
-        //- Droplet dictionary
-        dictionary dropletDict_;
+        //- Shape dictionary
+        dictionary shapeDict_;
+        dictionary coeffDict_;
 
-        vector center_;
-        vector radius_;
         scalar dV_;
         vector Uinit_;
+        
         HashTable<scalar> liquidSpecies_;
         HashTable<scalar> vaporSpecies_;
         
-        volScalarField dropMask_; //TODO: Change to scalarField
+        volScalarField liquidMask_; //TODO: Change to scalarField
         volScalarField vaporMask_; //TODO: Change to scalarField
         
+        
+        shape(const shape&);
+        
+        void operator=(const shape&);
+        
 public:
+    
+        TypeName("shape");
+    
+        declareRunTimeSelectionTable
+        (
+            autoPtr,
+            shape,
+            components,
+            (
+                const word& name,
+                dictionary shapeDict,
+                const fvMesh& mesh
+            ),
+            (name, shapeDict, mesh)
+        );
+        
+    // Selectors
 
+        //- Return a reference to the selected phaseChange model
+        static autoPtr<shape> New
+        (
+            const word& name,
+            dictionary shapeDict,
+            const fvMesh& mesh
+        );
+        
     // Constructors
 
         //- Construct from components
-        droplet
+        shape
         (
+            const word& type,
             const word& name,
-            const dictionary& dropletDict,
+            dictionary shapeDict,
             const fvMesh& mesh
         );
 
+        virtual ~shape() {}
+        
         //- Return clone
-        autoPtr<droplet> clone() const;
+        autoPtr<shape> clone() const;
 
-        //- Return a pointer to a new droplet created on freestore
+        //- Return a pointer to a new shape created on freestore
         //  from Istream
         class iNew
         {
@@ -108,10 +139,10 @@ public:
                 mesh_(mesh)
             {}
 
-            autoPtr<droplet> operator()(Istream& is) const
+            autoPtr<shape> operator()(Istream& is) const
             {
                 dictionaryEntry ent(dictionary::null, is);
-                return autoPtr<droplet>(new droplet(ent.keyword(), ent, mesh_));
+                return autoPtr<shape>(shape::New(ent.keyword(), ent, mesh_));
             }
         };
 
@@ -120,7 +151,7 @@ public:
 
         const dictionary& dict() const
         {
-            return dropletDict_;
+            return shapeDict_;
         }
 
         const word& name() const
@@ -133,9 +164,9 @@ public:
             return name();
         }
         
-        const volScalarField& dropMask() const
+        const volScalarField& liquidMask() const
         {
-            return dropMask_;
+            return liquidMask_;
         }
         
         const volScalarField& vaporMask() const
@@ -143,8 +174,7 @@ public:
             return vaporMask_;
         }
         
-        
-        void set
+        virtual void set
         (
             volScalarField& alphaLiquid,
             volVectorField& U,
@@ -154,10 +184,8 @@ public:
         void calcDropMask();
         
         List<word> species() const;
-        
-        tmp<scalarField> r() const;
 
-        void calculate();
+        virtual void calculate() =0;
 };
 
 
