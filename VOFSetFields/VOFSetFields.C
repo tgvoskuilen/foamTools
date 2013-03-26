@@ -53,7 +53,13 @@ int main(int argc, char *argv[])
     // Set drop species and liquid fraction
     forAllIter(PtrDictionary<shape>, shapes, shapeI)
     {
-        shapeI().set(alphaLiquid, U, species);
+        label liqIdx = phaseNames[shapeI().phaseName()];
+        shapeI().set(liquidPhases[liqIdx], U, species);
+    }
+    
+    forAll(liquidPhases, phaseI)
+    {
+        alphaLiquid += liquidPhases[phaseI];
     }
     
     alphaLiquid.correctBoundaryConditions();

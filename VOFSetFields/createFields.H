@@ -12,20 +12,21 @@
         )
     );
     
-    word liquidPhaseName = VOFDict.lookup("liquidPhaseName");
+    //word liquidPhaseName = VOFDict.lookup("liquidPhaseName");
     word vaporPhaseName = VOFDict.lookup("vaporPhaseName");
     
     volScalarField alphaLiquid
     (
         IOobject
         (
-            liquidPhaseName,
+            "alphaL_",
             runTime.timeName(),
             mesh,
-            IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
         ),
-        mesh
+        mesh,
+        dimensionedScalar("alphaL",dimless,0.0)
     );
     
     volScalarField* alphaVaporPtr = NULL;
@@ -85,13 +86,49 @@
     
     HashTable<scalar> defaultSpecieValues(VOFDict.lookup("defaultSpecies"));
     
+    HashTable<label> phaseNames(5);
+    label idx = 0;
     
     List<word> specieNames = defaultSpecieValues.toc();
     
     forAllConstIter(PtrDictionary<shape>, shapes, shapeI)
     {
         specieNames.append( shapeI().species() );
+        phaseNames.insert( shapeI().phaseName(), idx );
+        idx++;
     }
+    
+    
+    
+    PtrList<volScalarField> liquidPhases(phaseNames.size());
+    
+    Info<< "Loading phases " << phaseNames << endl;
+    
+    for(label i = 0; i < phaseNames.size(); ++i)
+    {
+        word name = phaseNames.toc()[i];
+        Info<< "Loading phase " << name  << endl;
+        
+        liquidPhases.set
+        (
+            i,
+            new volScalarField
+            (
+                IOobject
+                (
+                    name,
+                    runTime.timeName(),
+                    mesh,
+                    IOobject::MUST_READ,
+                    IOobject::AUTO_WRITE
+                ),
+                mesh
+            )
+        );
+    }
+    
+    
+    
     
     
     PtrList<volScalarField> species(specieNames.size());

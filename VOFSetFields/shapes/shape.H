@@ -62,6 +62,9 @@ protected:
         //- Shape name
         word name_;
         
+        //- Shape's phase name
+        word phaseName_;
+        
         //- Shape dictionary
         dictionary shapeDict_;
         dictionary coeffDict_;
@@ -157,6 +160,11 @@ public:
         const word& name() const
         {
             return name_;
+        }
+        
+        const word& phaseName() const
+        {
+            return phaseName_;
         }
 
         const word& keyword() const

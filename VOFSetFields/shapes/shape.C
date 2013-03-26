@@ -43,6 +43,7 @@ Foam::shape::shape
 :
     mesh_(mesh),
     name_(name),
+    phaseName_(shapeDict.lookup("alphaName")),
     shapeDict_(shapeDict),
     coeffDict_(shapeDict.subDict(type+"Coeffs")),
     dV_(readScalar(shapeDict.lookup("delVapor"))),
