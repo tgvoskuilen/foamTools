@@ -65,6 +65,56 @@ int main(int argc, char *argv[])
     
     word alphaName = initDynamicMeshDict.lookup("alphaName");
     
+    List<word> vsfNames = initDynamicMeshDict.lookup("volScalarFields");
+    List<word> vvfNames = initDynamicMeshDict.lookup("volVectorFields");
+    
+    
+    PtrList<volScalarField> vsfs(vsfNames.size());
+    PtrList<volVectorField> vvfs(vvfNames.size());
+    
+    forAll(vsfNames, vi)
+    {
+        vsfs.set
+        (
+            vi,
+            new volScalarField
+            (
+                IOobject
+                (
+                    vsfNames[vi],
+                    runTime.timeName(),
+                    mesh,
+                    IOobject::MUST_READ,
+                    IOobject::AUTO_WRITE
+                ),
+                mesh
+            )
+        );
+    }
+    
+    forAll(vvfNames, vi)
+    {
+        vvfs.set
+        (
+            vi,
+            new volVectorField
+            (
+                IOobject
+                (
+                    vvfNames[vi],
+                    runTime.timeName(),
+                    mesh,
+                    IOobject::MUST_READ,
+                    IOobject::AUTO_WRITE
+                ),
+                mesh
+            )
+        );
+    }
+    
+    
+    
+    
     Info<< "Reading field " << alphaName << endl;
     
     volScalarField alpha1

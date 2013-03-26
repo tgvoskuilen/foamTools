@@ -542,7 +542,15 @@ def get_proc_pairing(np, ratio=1.0):
     return f[fr.index(min(fr))]
 
 
-
+def set_balance_par(np):
+    """
+    Sets the balanceParDict file using the template .org file and np
+    """
+    os.system('rm -f system/balanceParDict')
+    os.system("sed"+
+              " -e s/NUMPROCS/"+str(np)+"/g"+
+              " system/balanceParDict.org > system/balanceParDict")
+              
 def set_decompose_par(np, method="simple", ratio=1.0):
     """
     Sets the decomposeParDict file using the template .org file and two

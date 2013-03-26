@@ -107,11 +107,12 @@
     for(label i = 0; i < phaseNames.size(); ++i)
     {
         word name = phaseNames.toc()[i];
+        label idx = phaseNames[name];
         Info<< "Loading phase " << name  << endl;
         
         liquidPhases.set
         (
-            i,
+            idx,
             new volScalarField
             (
                 IOobject
@@ -125,6 +126,8 @@
                 mesh
             )
         );
+        
+        liquidPhases[idx] = dimensionedScalar("zero",dimless,0.0);
     }
     
     
