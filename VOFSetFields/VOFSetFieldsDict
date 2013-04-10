@@ -15,15 +15,24 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+
+// Leave empty if not setting mass fractions
 defaultSpecies
 (
     N2   1.0
 );
 
+// Vapor phase name, or "none"
+vaporPhaseName   alphaVapor;
+
+// Shapes to create, and liquid phase name to set for each
+//  Leave specie lists empty if not setting mass fractions
 shapes
 (
     DropA
     {
+        alphaName  alphaLiquid;
+        
         shape    ellipsoid;
         
         ellipsoidCoeffs
@@ -48,6 +57,8 @@ shapes
     
     PlaneA
     {
+        alphaName  alphaLiquid;
+        
         shape    plane;
         
         planeCoeffs
