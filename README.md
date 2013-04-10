@@ -21,7 +21,8 @@ like circles, spheres, and ellipses with their actual volume fraction.
 This prevents the initial instability with a pixellated circle that
 comes from using setFields.
 
-## dynamicRefineBalancedFvMesh
+## redistributeParPlus
 
-A dynamicFvMesh based on dynamicRefineFvMesh that uses runtime load balancing
-to keep the problem balanced in parallel cases.
+Revised version of redistributePar that also distributes refinementHistory, so
+you can use it with dynamicRefineFvMesh cases. Will be moved to the 
+meshBalancing repo eventually and made public.
