@@ -12,7 +12,8 @@ the plane in them that recreates a PLIC interface.
 ## initDynamicMesh
 
 An executable for initializing a dynamically refined mesh. Loads alphaVapor
-and refines at phase interfaces.
+and refines at phase interfaces. The dictionary interface allows setting
+subspecie concentrations, velocities, and vapor layers as well.
 
 ## VOFSetFields
 
