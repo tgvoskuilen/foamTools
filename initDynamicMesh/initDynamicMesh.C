@@ -48,7 +48,8 @@ int main(int argc, char *argv[])
     #include "setRootCase.H"
     #include "createTime.H"
     #include "createDynamicFvMesh.H"
-
+    
+    
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 	
     IOdictionary initDynamicMeshDict
@@ -74,6 +75,7 @@ int main(int argc, char *argv[])
     
     forAll(vsfNames, vi)
     {
+        Info<< "Loading " << vsfNames[vi] << endl;
         vsfs.set
         (
             vi,
@@ -94,6 +96,7 @@ int main(int argc, char *argv[])
     
     forAll(vvfNames, vi)
     {
+        Info<< "Loading " << vvfNames[vi] << endl;
         vvfs.set
         (
             vi,
@@ -112,6 +115,8 @@ int main(int argc, char *argv[])
         );
     }
     
+    //const volVectorField& U = mesh.lookupObject<volVectorField>("U");
+    //#include "createPhi.H" //needed to do boundary corrections.
     
     
     
@@ -153,7 +158,20 @@ int main(int argc, char *argv[])
     {
 	    mesh.update();
     }
-
+    
+    /*
+    alpha1.correctBoundaryConditions();
+    
+    forAll(vsfs, i)
+    {
+        vsfs[i].correctBoundaryConditions();
+    }
+    
+    forAll(vvfs, i)
+    {
+        vvfs[i].correctBoundaryConditions();
+    }
+    */
 
 	if (mesh.changing())
 	{
