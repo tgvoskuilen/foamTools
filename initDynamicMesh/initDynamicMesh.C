@@ -22,13 +22,11 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Application
-    multiphaseInterFoam
+    initDynamicMesh
 
 Description
-    Solver for n incompressible fluids which captures the interfaces and
-    includes surface-tension and contact-angle effects for each phase.
-
-    Turbulence modelling is generic, i.e. laminar, RAS or LES may be selected.
+    Initializes dynamic mesh refinement prior to solver calls to get 
+    well-resolved initial conditions
 
 \*---------------------------------------------------------------------------*/
 
@@ -114,12 +112,7 @@ int main(int argc, char *argv[])
             )
         );
     }
-    
-    //const volVectorField& U = mesh.lookupObject<volVectorField>("U");
-    //#include "createPhi.H" //needed to do boundary corrections.
-    
-    
-    
+       
     Info<< "Reading field " << alphaName << endl;
     
     volScalarField alpha1
@@ -159,22 +152,11 @@ int main(int argc, char *argv[])
 	    mesh.update();
     }
     
-    // TODO: Correct only processor boundaries
-    /*alpha1.correctBoundaryConditions();
     
-    forAll(vsfs, i)
-    {
-        vsfs[i].correctBoundaryConditions();
-    }
-    
-    forAll(vvfs, i)
-    {
-        vvfs[i].correctBoundaryConditions();
-    }*/
-    
-
 	if (mesh.changing())
 	{
+	    #include "correctProcessorPatches.H"  
+	    
 		Info<< "Execution time for mesh.update() = "
 			<< runTime.elapsedCpuTime() - timeBeforeMeshUpdate
 			<< " s" << endl;
