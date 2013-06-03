@@ -864,7 +864,7 @@ int main(int argc, char *argv[])
     (
         IOobject
         (
-            "decomposeParDict",
+            "balanceParDict",
             runTime.system(),
             mesh,
             IOobject::MUST_READ_IF_MODIFIED,

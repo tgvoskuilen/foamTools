@@ -159,8 +159,8 @@ int main(int argc, char *argv[])
 	    mesh.update();
     }
     
-    /*
-    alpha1.correctBoundaryConditions();
+    // TODO: Correct only processor boundaries
+    /*alpha1.correctBoundaryConditions();
     
     forAll(vsfs, i)
     {
@@ -170,8 +170,8 @@ int main(int argc, char *argv[])
     forAll(vvfs, i)
     {
         vvfs[i].correctBoundaryConditions();
-    }
-    */
+    }*/
+    
 
 	if (mesh.changing())
 	{

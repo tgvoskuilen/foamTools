@@ -31,6 +31,35 @@ def add_species_to_thermo_dict(species):
     f_thermoDict = open('constant/thermophysicalProperties','r')
     thermo_lines = f_thermoDict.readlines()
     f_thermoDict.close()
+    
+    
+    #read which species are liquid
+    in_liquid = False
+    in_subspecies = False
+    bracket_count = 0
+    liquid_species = []
+    for i,line in enumerate(thermo_lines):
+        if "Liquid" in line:
+            in_liquid = True
+            
+        if "subspecies" in line and in_liquid:
+            in_subspecies = True
+            
+        if ");" in line and in_liquid:
+            in_subspecies = False
+            
+        if in_subspecies and in_liquid:
+            if "{" in line:
+                if bracket_count == 0:
+                    nameline = thermo_lines[i-1]
+                    liquid_species.append(nameline.strip())
+                
+                bracket_count = bracket_count + 1
+            
+            if "}" in line:
+                bracket_count = bracket_count - 1
+    
+    #print "Liquid species:", liquid_species
 
     in_vapor = False
     in_subspecies = False
@@ -51,7 +80,7 @@ def add_species_to_thermo_dict(species):
 
     new_lines = []
     for specie in species:
-        if "L" not in specie:
+        if specie not in liquid_species:
             n = 12 - len(specie)
             new_lines.append("        %s" % specie + n*" "+" {}\n")
 
@@ -181,14 +210,17 @@ def touch_foam_files(name):
 
 
 def read_inputs(argv):
-    """ Reads the command line input for np """
+    """ Reads the command line input for np and whether this is a restart """
     if len(argv) > 1:
         try:
-            return int(argv[1])
+            return (int(argv[1]),False)
         except ValueError:
-            return 1
+            if argv[1] == "resume":
+                return (len(get_proc_dirs()),True)
+            else:
+                raise ValueError("Invalid argument")
     else:
-        return 1
+        return (1,False)
 
 
 def get_imbalance():

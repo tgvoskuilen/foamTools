@@ -111,7 +111,7 @@ void Foam::shapes::ellipsoid::calculate()
     liquidMask_.correctBoundaryConditions();
     
     //calculate vapor mask
-    scalar d_layer = Foam::mag(radius_)/dV_;
+    scalar d_layer = Foam::mag(radius_)/(dV_+SMALL);
 
     tmp<scalarField> f = Foam::max(1.0 - d_layer*(r() - 1.0), 0.0);
     
