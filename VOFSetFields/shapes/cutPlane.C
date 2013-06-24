@@ -79,7 +79,7 @@ void Foam::shapes::cutPlane::calculate()
     liquidMask_.correctBoundaryConditions();
     
     //calculate vapor mask
-    tmp<scalarField> f = Foam::max(dV_ - d(), 0.0);
+    tmp<scalarField> f = Foam::max(1.0 - d()/dV_, 0.0);
     
     vaporMask_.internalField() = f * (1.0 - liquidMask_);
     vaporMask_.correctBoundaryConditions();

@@ -118,6 +118,10 @@ void Foam::shape::set
         
         if( vaporSpecies_.found(species[i].name()) )
         {
+            Info<<"Setting vapor " << species[i].name() << " to " 
+                << vaporSpecies_[species[i].name()] << " on mask with max "
+                << Foam::max(vaporMask_).value() << endl;
+                
             species[i].internalField() += vaporMask_*vaporSpecies_[species[i].name()];
         }
     }
