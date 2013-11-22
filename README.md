@@ -1,7 +1,7 @@
 foamTools
 =========
 
-Utilities and libraries for OpenFOAM
+Utilities and libraries for OpenFOAM. This has been tested with OpenFOAM-2.1.x and OpenFOAM-2.2.x
 
 
 ## geometryTools
