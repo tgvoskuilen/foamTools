@@ -48,6 +48,7 @@ Foam::shape::shape
     coeffDict_(shapeDict.subDict(type+"Coeffs")),
     dV_(readScalar(shapeDict.lookup("delVapor"))),
     Uinit_(shapeDict.lookup("U")),
+    Tinit_(readScalar(shapeDict.lookup("T"))),
     liquidSpecies_(shapeDict.lookup("liquidSpecies")),
     vaporSpecies_(shapeDict.lookup("vaporSpecies")),
     liquidMask_
@@ -100,14 +101,20 @@ void Foam::shape::set
 (
     Foam::volScalarField& alphaLiquid,
     Foam::volVectorField& U,
+    Foam::volScalarField& T,
     PtrList<volScalarField>& species
 )
 {
     calculate();
     
     alphaLiquid.internalField() += liquidMask_;
-    //U.internalField() += Uinit_*pos(liquidMask_+vaporMask_ - SMALL);
+    
     U.internalField() += Uinit_*pos(liquidMask_ - SMALL);
+    
+    tmp<volScalarField> quadMask = pow(1.0 - liquidMask_ - vaporMask_, 2.0);
+    
+    T.internalField() *= quadMask(); //zeros out T in masked region
+    T.internalField() += Tinit_*(1.0 - quadMask()); // set T in masked region
 
     forAll(species, i)
     {

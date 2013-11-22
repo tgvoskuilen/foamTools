@@ -71,6 +71,7 @@ protected:
 
         scalar dV_;
         vector Uinit_;
+        scalar Tinit_;
         
         HashTable<scalar> liquidSpecies_;
         HashTable<scalar> vaporSpecies_;
@@ -186,6 +187,7 @@ public:
         (
             volScalarField& alphaLiquid,
             volVectorField& U,
+            volScalarField& T,
             PtrList<volScalarField>& species
         );
         

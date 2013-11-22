@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
     {
         Info<< "Setting shape " << shapeI().name() << endl;
         label liqIdx = phaseNames[shapeI().phaseName()];
-        shapeI().set(liquidPhases[liqIdx], U, species);
+        shapeI().set(liquidPhases[liqIdx], U, T, species);
     }
     
     forAll(liquidPhases, phaseI)

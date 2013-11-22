@@ -15,6 +15,9 @@
     //word liquidPhaseName = VOFDict.lookup("liquidPhaseName");
     word vaporPhaseName = VOFDict.lookup("vaporPhaseName");
     
+    vector Udefault = VOFDict.lookup("Udefault");
+    scalar Tdefault = readScalar(VOFDict.lookup("Tdefault"));
+    
     volScalarField alphaLiquid
     (
         IOobject
@@ -53,6 +56,19 @@
         IOobject
         (
             "U",
+            runTime.timeName(),
+            mesh,
+            IOobject::MUST_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh
+    );
+    
+    volScalarField T
+    (
+        IOobject
+        (
+            "T",
             runTime.timeName(),
             mesh,
             IOobject::MUST_READ,
@@ -206,7 +222,10 @@
     
     
     alphaLiquid = dimensionedScalar("alphaLiquid",dimless,0.0);
-    U = dimensionedVector("U",dimVelocity,vector::zero);
+    
+    U = dimensionedVector("U",dimVelocity,Udefault);
+    T = dimensionedScalar("T",dimTemperature,Tdefault);
+    
     forAll(species, i)
     {
         species[i] = dimensionedScalar(species[i].name(),dimless,0.0);
