@@ -216,11 +216,38 @@ def read_inputs(argv):
             return (int(argv[1]),False)
         except ValueError:
             if argv[1] == "resume":
+                preserve_log_files()
                 return (len(get_proc_dirs()),True)
             else:
                 raise ValueError("Invalid argument")
     else:
         return (1,False)
+
+def preserve_log_files():
+    """
+    Preserves log files upon resume. The log files considered are "log" in the 
+    case directory and any *.out files in processor0 (for parallel) or in the
+    case directory for single processor runs.
+    """
+    
+    # Make a copy of the log file
+    if any([f == 'log' for f in os.listdir('.')]):
+        numCopies = len([f for f in os.listdir('.') if f.endswith('.Lcopy')])
+        os.system('mv log log.%d.Lcopy' % numCopies)
+    
+    # Check for *.out files
+    if num_procs() > 1:
+        baseDir = 'processor0'
+    else:
+        baseDir = '.'
+    
+    outFiles = [f for f in os.listdir(baseDir) if f.endswith('.out')]
+    
+    if len(outFiles) > 1:
+        raise ValueError("Too many 'out' files")
+    elif len(outFiles) > 0:
+        numCopies = len([f for f in os.listdir('.') if f.endswith('.Ocopy')])
+        os.system('mv %s/%s %s.%d.Ocopy' % (baseDir,outFiles[0],outFiles[0],numCopies))
 
 
 def get_imbalance():
@@ -253,7 +280,7 @@ def get_imbalance():
 
 def num_procs():
     """ Returns the number of processors used in this case """
-    return length(get_proc_dirs())
+    return max([1,len(get_proc_dirs())])
 
 
 
@@ -394,18 +421,23 @@ def set_decompose_par3D(np, method="simple", ratio=1.0):
               " system/decomposeParDict.org > system/decomposeParDict")
 
 
-def run(program, np=1, args="", hide=True):
+def run(program, np=1, args="", hide=True, logName=None):
     """
     General routine for running OpenFOAM programs, either in serial or parallel
     If np is set as 1, a serial run is used. Otherwise, mpirun is called.
     """ 
-    if np > 1:
-        cmd = "mpirun -np " + str(np) + " " + program + " -parallel " + args
-    else:
-        cmd = program + " " + args
-        
+    if logName is None:
+        logName = "log."+program
+    
     if hide:
-        cmd = cmd + " > log." + program
+        suffix = " > " + logName
+    else:
+        suffix = " | tee " + logName
+        
+    if np > 1:
+        cmd = "mpirun -np " + str(np) + " " + program + " -parallel " + args + suffix
+    else:
+        cmd = program + " " + args + suffix
 
     print " - Running Command: %s" % cmd
     os.system(cmd)
