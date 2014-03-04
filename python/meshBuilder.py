@@ -2,9 +2,10 @@
 import math
 
 class Face(object):
-    def __init__(self, localPoints, localIDs, globalPoints, name):
+    def __init__(self, localPoints, localIDs, globalPoints, name, patchType):
         self.pointIDs = []
         self.name = name
+        self.patchType = patchType
         
         for p in localIDs:
             pt = localPoints[p]
@@ -113,6 +114,9 @@ class Block(object):
         self.faces = []
         self.fixedSize = size
         
+        if len(c1) != 3 or len(c2) != 3:
+            raise ValueError("Input points must have 3 components each")
+        
         if len(refdir) == 3:
             self.refdir = [refdir[0], refdir[0], refdir[0], refdir[0], \
                            refdir[1], refdir[1], refdir[1], refdir[1], \
@@ -144,11 +148,12 @@ class Block(object):
             
         return (gpts, self.size)
         
-        
-    def getFaces(self, points):
+    
+    def getFaces(self, points, defPatchType, defPatchName):
+        """ All faces default to walls """
         faces = []
         for f in self.faces:
-            faces.append( Face(self.points, f, points, "walls") )
+            faces.append( Face(self.points, f, points, defPatchName, defPatchType) )
             
         return faces
         
@@ -211,7 +216,7 @@ class NonIsoBlock(Block):
                       (4,7,3,0), (5,4,0,1)]
         
 class BlockMesh(object):
-    def __init__(self, blocks):
+    def __init__(self, blocks, defPatchType="wall", defPatchName="walls"):
         self.blocks = []
         self.gradings = []
         self.points = []
@@ -236,7 +241,7 @@ class BlockMesh(object):
         # Build faces from global points, remove exact duplicates
         tmpFaces = []
         for i,block in enumerate(blocks):
-            for face in block.getFaces(self.points):
+            for face in block.getFaces(self.points, defPatchType, defPatchName):
                 if face not in tmpFaces:
                     # Face has not been added yet, add it to both
                     tmpFaces.append(face) #all the faces we've seen
@@ -257,21 +262,36 @@ class BlockMesh(object):
                         raise ValueError
          
                     
-    def tagFaces(self,p,n,name):
+    def tagFaces(self,p,n,name,patchType=None):
+        if patchType is None:
+            patchType = 'patch'
+            
+        if len(p) != 3 or len(n) != 3:
+            raise ValueError("Input points must have 3 components each") 
+            
         for f in self.faces:
             if n is not None:
                 if f.coplanar(p,n,self.points):
                     f.name = name
+                    f.patchType = patchType
             else:
                 if f.haspts(p,self.points): #p is a list or tuple of 3 points
                     f.name = name
+                    f.patchType = patchType
         
     def removeArcsOnPlane(self, point, normal):
+        if len(point) != 3 or len(normal) != 3:
+            raise ValueError("Input points must have 3 components each") 
+            
         newArcs = [a for a in self.arcs if not a.inPlane(point, normal, self.points)]
         self.arcs = newArcs
             
     
     def makeArcs(self,base,radius,direction):
+    
+        if len(base) != 3 or len(direction) != 3:
+            raise ValueError("Input points must have 3 components each") 
+            
         b = Point(base[0],base[1],base[2])
         n = Point(direction[0],direction[1],direction[2])
         tol = 1e-2
@@ -289,7 +309,8 @@ class BlockMesh(object):
                 
                 # skew criteria is to catch a pair of points on the cylinder surface aligned with the normal direction
                 skew = abs(n.dot(p2 - p1)/dP.mag())
-            
+                    
+                    
                 if abs(rP1.mag() - radius) < tol and \
                    abs(rP2.mag() - radius) < tol and \
                    abs(skew - 1.0) > tol:
@@ -303,7 +324,7 @@ class BlockMesh(object):
                     aTmp = Arc(e[0],e[1],pA)
                     if aTmp not in self.arcs:
                         self.arcs.append(aTmp)
-                        print "matched ", p1, p2
+                        #print "matched ", p1, p2
                         
                 #elif abs(p1.x()) < tol or abs(p2.x()) < tol:
                 #    print "  almost with ", p1, p2, rP1.mag()-radius, rP2.mag()-radius, skew, radius
@@ -342,16 +363,20 @@ FoamFile
             if self.blockSrc[i].fixedSize is None:
                 sz = " ".join([str(int(x*self.scale)) for x in bsize])
             else:
-                sz = " ".join([str(x) for x in self.blockSrc[i].fixedSize])
+                sz = " ".join([str(int(x)) for x in self.blockSrc[i].fixedSize])
             
             ref = " ".join([str(x) for x in self.gradings[i]])
             s = s + "    hex (" + pts + ") ("+sz+") edgeGrading ("+ref+")\n"
             
             
+        # a patch is a list of tuples of face names and types, for example:
+        #  patches = [('walls','wall'), ('inlet','patch'), ('outlet','patch)]
+        # if you make two faces of the same name and different type, it will
+        # result in unexpected behavior
         patches = []
         for f in self.faces:
-            if f.name not in patches:
-                patches.append(f.name)
+            if f.name not in [x[0] for x in patches]:
+                patches.append((f.name,f.patchType))
                 
             
         s = s + ");\n\n"
@@ -365,18 +390,14 @@ FoamFile
         s = s + "boundary\n(\n"
         
         for p in patches:
-            if "wall" in p:
-                s = s + "    "+p+"\n    {\n        type wall;\n        faces\n"
-            elif "symmetry" in p:
-                s = s + "    "+p+"\n    {\n        type symmetryPlane;\n        faces\n"
-            else:
-                s = s + "    "+p+"\n    {\n        type patch;\n        faces\n"
-                
+            
+            s = s + "    "+p[0]+"\n    {\n        type "+p[1]+";\n        faces\n"
+
             s = s + "        (\n"
         
             i = 0
             for f in self.faces:
-                if f.name == p:
+                if f.name == p[0]:
                     s = s + " "*12 + str(f) + """ //"""+str(i)+"\n"
                     i = i + 1
         

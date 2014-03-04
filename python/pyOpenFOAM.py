@@ -164,6 +164,16 @@ def load_chemistry(chemFile, utilFolder):
     run('chemkinToFoam',args=chemPath+' '+thermPath+' constant/reactions constant/thermo');
     os.system('rm -f constant/thermo')
     
+    
+def convert_chemistry(utilFolder, keepThermo=False):
+    thermPath = os.path.join(utilFolder, 'props', 'thermo.dat')
+    
+    run('chemkinToFoam',args='chem.inp '+thermPath+' constant/reactions constant/thermo');
+    
+    if not keepThermo:
+        os.system('rm -f constant/thermo')
+    
+    os.system('rm -f chem.inp')
 
 def read_species():
     """
