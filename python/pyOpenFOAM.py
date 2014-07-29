@@ -3,7 +3,103 @@ import os
 import re
 import string
 import ast
+import gzip
+import time
+import sys
 
+
+def write_progress(prog, temp=None, deltaT=None):
+    """ 
+    Draw an ASCII progress bar at the terminal.
+    prog is an integer from 0 to 100 
+    """
+    
+    progstr = '[' + prog*'=' + '>' + (100-prog)*' ' + '] ' + str(prog) + ' %'
+    
+    if temp is not None and deltaT is not None:
+        progstr = progstr + ' (T = ' + str(int(temp)) + (' K, dT = %3.0e s)' % deltaT)
+        
+        
+    sys.stdout.write("\r   %s" % progstr)
+    sys.stdout.flush()
+
+def monitor_log():
+    """
+    This monitoring program is meant to be run while chemFoam is running to
+    provide a progress bar. Run chemFoam as a background process with 
+    os.system('chemFoam > output.log &') then run this and it will show the
+    progress until chemFoam is completed.
+    """
+    running = True
+    
+    os.system("grep '^endTime' system/controlDict > tmpFile")
+    efStr = ''
+    with open('tmpFile','r') as tf:
+        for line in tf:
+            efStr = line
+    
+    endTime = float(efStr.split()[1][:-1])
+    
+    while running:
+    
+        os.system("tail -n 50 output.log | grep '^Time = ' > logTimes")
+        os.system("tail -n 50 output.log | grep ' T = ' > logTemps")
+        os.system("tail -n 50 output.log | grep '^deltaT = ' > logDeltaT")
+        os.system("tail -n 50 output.log | grep 'End' > logEnd")
+        
+        lastTimeStr = ''
+        with open('logTimes','r') as tf:
+            for line in tf:
+                lastTimeStr = line
+            
+        if lastTimeStr:
+            try:
+                currentTime = float(lastTimeStr.split()[2])
+            except ValueError:
+                currentTime = 0.0
+        else:
+            currentTime = 0.0
+            
+        lastTempStr = ''
+        with open('logTemps','r') as tf:
+            for line in tf:
+                lastTempStr = line
+            
+        if lastTempStr:
+            currentTemp = float(lastTempStr.split()[5][:-1])
+        else:
+            currentTemp = 0.0
+            
+        lastDeltaTStr = ''
+        with open('logDeltaT','r') as tf:
+            for line in tf:
+                lastDeltaTStr = line
+            
+        if lastDeltaTStr:
+            currentDeltaT = float(lastDeltaTStr.split()[2])
+        else:
+            currentDeltaT = 0.0
+
+        write_progress(int(100.*currentTime/endTime), currentTemp, currentDeltaT)
+        
+        hasEndStr = ''
+        with open('logEnd','r') as tf:
+            for line in tf:
+                hasEndStr = line
+            
+        if hasEndStr:
+            running = False
+        
+        time.sleep(1)
+        
+    # Remove temporary files
+    os.remove('logTimes')
+    os.remove('logTemps')
+    os.remove('logDeltaT')
+    os.remove('logEnd')
+    os.remove('tmpFile')
+    os.remove('output.log')
+    
 
 def max_refinement_levels():
     """
@@ -95,6 +191,10 @@ def add_species_to_thermo_dict(species):
 
 
 def load_thermo_db(dbpath):
+    """
+    Load the thermodynamic and transport database from the thermo.pydb file
+    into a Python dictionary
+    """
     with open(dbpath,'r') as f:
         lines = f.readlines()
         
@@ -140,12 +240,12 @@ def thermo_string(data):
     return s
         
 
-def write_thermo(species, utilPath):
+def write_thermo(species, propPath):
     """
     Takes a list of species and writes the thermo file using the database 
     entries. A fatal exception is raised if a specie is not found.
     """
-    dbfile = os.path.join(utilPath,'props','thermo.pydb')
+    dbfile = os.path.join(propPath,'thermo.pydb')
     db = load_thermo_db(dbfile)
     
     with open('constant/thermo','w') as thermoFile:
@@ -156,24 +256,98 @@ def write_thermo(species, utilPath):
                 print "\nERROR: Specie %s not found in database\n\n" % s
                 raise
 
+def get_times():
+    """
+    Returns a sorted list of the time folders
+    """
+    proc_path = os.getcwd()
+
+    if os.path.isdir(proc_path):
+
+        proc_dirs = [ d for d in os.listdir(proc_path) 
+                      if os.path.isdir(os.path.join(proc_path, d)) ]
+
+        time_dirs = []
+
+        for dirname in proc_dirs:
+            try:
+                t = float(dirname)
+                time_dirs.append(dirname)
+            except ValueError:
+                pass
+
+        time_dirs.sort(key=float)
+        time_dirs.pop(0) #remove zero time folder
+
+        return time_dirs
+
+    else:
+        return None
+        
+def get_fields(folder):
+    """
+    Get a list of the field names from the first populated folder
+    """
+    time_path = os.path.join(os.getcwd(), folder)
+    
+    if os.path.isdir(time_path):
+        gzFiles = [f for f in os.listdir(time_path)
+                   if f.endswith('.gz')]
+        
+        fields = ['Time']
+        for f in gzFiles:
+            n,e = os.path.splitext(f)
+            fields.append(n)
             
-def load_chemistry(chemFile, utilFolder):
-    chemPath = os.path.join(utilFolder, 'chem', chemFile)
-    thermPath = os.path.join(utilFolder, 'props', 'thermo.dat')
+        return fields
     
-    run('chemkinToFoam',args=chemPath+' '+thermPath+' constant/reactions constant/thermo');
-    os.system('rm -f constant/thermo')
+    else:
+        return None
+
+
+def get_field_data(folder,fieldList):
+    """
+    Unzip and read the data from all the specified fields in a given folder
+    """
+    time_path = os.path.join(os.getcwd(), folder)
     
+    if os.path.isdir(time_path):
+        values = [float(folder)]
+        for i,f in enumerate(fieldList):
+            if i > 0:
+                filePath = os.path.join(time_path,f+'.gz')
+                fz = gzip.open(filePath,'rb')
+                content = fz.read()
+                fz.close()
+                
+                loc1 = string.find(content,'internalField')
+                chop1 = content[loc1:]
+                loc2 = string.find(chop1,';')
+                chop2 = chop1[13:loc2]
+                if "nonuniform" not in chop2:
+                    values.append(float(string.split(chop2)[1]))
+                else:
+                    values.append(0.)
+            
+        return values
     
-def convert_chemistry(utilFolder, keepThermo=False):
-    thermPath = os.path.join(utilFolder, 'props', 'thermo.dat')
+    else:
+        return None
+        
+def convert_chemistry(propsFolder, keepFiles=False):
+    """
+    Convert a CHEMKIN chemistry set to OpenFOAM format and save to
+    constant/reactions. Delete the constant/thermo file by default since it
+    contains made up transport properties.
+    """
+    thermPath = os.path.join(propsFolder, 'thermo.dat')
     
     run('chemkinToFoam',args='chem.inp '+thermPath+' constant/reactions constant/thermo');
     
-    if not keepThermo:
+    if not keepFiles:
         os.system('rm -f constant/thermo')
-    
-    os.system('rm -f chem.inp')
+        os.system('rm -f chem.inp')
+
 
 def read_species():
     """
@@ -211,7 +385,10 @@ def get_proc_dirs():
 
 
 def touch_foam_files(name):
-    """ Creates empty .foam files for paraview """
+    """ 
+    Creates empty .foam files for ParaView, including ones in each processor 
+    folder.
+    """
     foamname = name+'.foam'
     os.system('touch '+foamname)
 
@@ -220,7 +397,9 @@ def touch_foam_files(name):
 
 
 def read_inputs(argv):
-    """ Reads the command line input for np and whether this is a restart """
+    """ 
+    Reads the command line input for np and whether this is a restart 
+    """
     if len(argv) > 1:
         try:
             return (int(argv[1]),False)
