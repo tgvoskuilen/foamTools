@@ -44,7 +44,7 @@ class Face(object):
         for pid in self.pointIDs:
             v = pts[pid] - Point(p[0],p[1],p[2])
             d = v.dot(Point(n[0],n[1],n[2]))
-            if abs(d) > 1e-3:
+            if abs(d) > 1e-6:
                 return False
                 
         return True
