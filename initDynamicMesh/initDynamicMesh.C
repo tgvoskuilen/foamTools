@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
         1e6*mag(fvc::grad(alpha1))
     );
 
-    runTime.setDeltaT(1e-6);
+    runTime.setDeltaT(1e-9);
     runTime++;
     
     Info<< "Time = " << runTime.timeName() << nl << endl;

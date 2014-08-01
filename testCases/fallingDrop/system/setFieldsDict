@@ -9,39 +9,38 @@ FoamFile
 {
     version     2.0;
     format      ascii;
-    class       volScalarField;
-    object      p_rgh;
+    class       dictionary;
+    location    "system";
+    object      setFieldsDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// pressure inside the droplets is set higher due to the surface tension
+// and radius (dP = sigma/r in 2D)
+defaultFieldValues
+(
+    volScalarFieldValue alpha1 0
+    volVectorFieldValue U (0 0 0)
+    volScalarFieldValue p_rgh 100000
+);
 
-dimensions      [1 -1 -2 0 0 0 0];
-
-internalField   uniform 1e5;
-
-boundaryField
-{
-    atmosphere
+regions
+(
+    //Set droplet
+    sphereToCell
     {
-        type            waveTransmissive;
-        value           uniform 1e5;
-        phi             phi;
-        rho             rho;
-        gamma           1.4;
-        lInf            0.05;
-        fieldInf        1e5;
+        centre (0 0.003 0.005);
+        radius 0.0005; //1 mm diameter
+        fieldValues
+        (
+            volScalarFieldValue alpha1 1
+            volVectorFieldValue U (0 0 -1)
+            volScalarFieldValue p_rgh 100140
+        );
+
     }
 
 
-    
-    frontAndBack
-    {
-        type            symmetryPlane;
-    }
-    
-    defaultFaces
-    {
-        type            empty;
-    }
-}
+);
+
 
 // ************************************************************************* //

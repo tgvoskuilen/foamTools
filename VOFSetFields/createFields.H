@@ -12,11 +12,10 @@
         )
     );
     
-    //word liquidPhaseName = VOFDict.lookup("liquidPhaseName");
-    word vaporPhaseName = VOFDict.lookup("vaporPhaseName");
+    word vaporPhaseName = VOFDict.lookupOrDefault<word>("vaporPhaseName","none");
     
-    vector Udefault = VOFDict.lookup("Udefault");
-    scalar Tdefault = readScalar(VOFDict.lookup("Tdefault"));
+    vector Udefault = VOFDict.lookupOrDefault<vector>("Udefault",vector::zero);
+    scalar Tdefault = VOFDict.lookupOrDefault<scalar>("Tdefault",0);
     
     volScalarField alphaLiquid
     (
@@ -49,6 +48,23 @@
             mesh
         );
     }
+    volScalarField* TPtr = NULL;
+    
+    if( Tdefault > 0 )
+    {
+        TPtr = new volScalarField
+        (
+            IOobject
+            (
+                "T",
+                runTime.timeName(),
+                mesh,
+                IOobject::MUST_READ,
+                IOobject::AUTO_WRITE
+            ),
+            mesh
+        );
+    }
     
     
     volVectorField U
@@ -64,18 +80,7 @@
         mesh
     );
     
-    volScalarField T
-    (
-        IOobject
-        (
-            "T",
-            runTime.timeName(),
-            mesh,
-            IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
-        ),
-        mesh
-    );
+
     
     volScalarField Yremaining
     (
@@ -224,7 +229,12 @@
     alphaLiquid = dimensionedScalar("alphaLiquid",dimless,0.0);
     
     U = dimensionedVector("U",dimVelocity,Udefault);
-    T = dimensionedScalar("T",dimTemperature,Tdefault);
+    
+    if( TPtr != NULL )
+    {
+        volScalarField& T = *TPtr;
+        T = dimensionedScalar("T",dimTemperature,Tdefault);
+    }
     
     forAll(species, i)
     {

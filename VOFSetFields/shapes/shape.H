@@ -187,7 +187,7 @@ public:
         (
             volScalarField& alphaLiquid,
             volVectorField& U,
-            volScalarField& T,
+            volScalarField* TPtr,
             PtrList<volScalarField>& species
         );
         

@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  2.1.1                                 |
+|  \\    /   O peration     | Version:  2.1.x                                 |
 |   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -11,18 +11,21 @@ FoamFile
     format      ascii;
     class       dictionary;
     location    "system";
-    object      decomposeParDict;
+    object      initDynamicMeshDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-numberOfSubdomains NUMPROCS;
+alphaName   alpha1;
 
-method          DECOMPOSEPAR_METHOD;
+volScalarFields //don't put "alphaName" in here
+(
+    p_rgh
+);
 
-simpleCoeffs
-{
-    n       ( 1 VALUE1 VALUE2 );
-    delta   0.001;
-}
+volVectorFields
+(
+    U
+);
+
 
 // ************************************************************************* //

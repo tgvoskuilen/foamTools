@@ -19,3 +19,7 @@ linux64GccDPOpt/
 
 # Text backup files
 *~
+
+# Images and media
+*.png
+*.avi

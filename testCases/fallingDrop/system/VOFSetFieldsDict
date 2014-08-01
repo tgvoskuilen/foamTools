@@ -19,52 +19,35 @@ defaultSpecies
 (
 );
 
-liquidPhaseName alpha1;
-vaporPhaseName none;
+Udefault (0 0 0);
 
-droplets
+shapes
 (
-    Drop1
+    Drop
     {
-        center   (0 0.001 0.005);
-        radius   (0 0.0005 0.0005);
-        delVapor 1e-4;
+        alphaName alpha1;
+        
+        shape    ellipsoid;
+        
+        ellipsoidCoeffs
+        {
+            center   (0 0.003 0.005);
+            radius   (0 0.0005 0.0005);
+        }
+        
+        delVapor 3e-4;
         U        (0 0 -1);
+        
         liquidSpecies
         (
         );
+        
         vaporSpecies
         (
         );
     }
     
-    Drop2
-    {
-        center   (0 0.005 0.005);
-        radius   (0 0.0005 0.0005);
-        delVapor 1e-4;
-        U        (0 0 -1);
-        liquidSpecies
-        (
-        );
-        vaporSpecies
-        (
-        );
-    }
-    
-    Drop3
-    {
-        center   (0 0.003 0.005);
-        radius   (0 0.0005 0.0005);
-        delVapor 1e-4;
-        U        (0 0 0);
-        liquidSpecies
-        (
-        );
-        vaporSpecies
-        (
-        );
-    }
+
 );
 
 
